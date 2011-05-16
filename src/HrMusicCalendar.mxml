@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MobileApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					 xmlns:s="library://ns.adobe.com/flex/spark"
+					 firstView="views.HomeScreen">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.formatters.DateFormatter;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			[Embed("assets/appicon-home.png")]
+			public static var homeIcon:Class;
+			
+			[Bindable]
+			[Embed("assets/appicon-back.png")]
+			public static var backIcon:Class;
+			
+			[Bindable]
+			[Embed("assets/appicon-refresh.png")]
+			public static var refreshIcon:Class;
+			
+			[Bindable]
+			[Embed("assets/appicon-closeapp.png")]
+			public static var closeAppIcon:Class;
+			
+			
+			private static var IsMapLoadedOnce : Boolean = false;
+			
+			private static var daysOfWeek:Array = ["Nedjelja", "Ponedjeljak", "Utorak", "Srijeda", "Četvrtak", "Petak", "Subota"];
+			private static const MILLISECONDS_IN_DAY : Number = 86400000;
+			
+			public static const BOTTOM_LABEL_SPACING : Number = 24;
+			
+			public static const BOTTOM_LABEL_TB_PADDING : Number = 3;
+			
+			public static const BOTTOM_LABEL_LR_PADDING : Number = 6;
+			
+			private static var CURRENT_DATE : Date = new Date();
+			
+			public static function BOTTOM_LABEL_TEXT() : String {
+				return "Data provided by Muzika.hr. All rights reserved © 2001-" + CURRENT_DATE.fullYear;
+			}
+			
+			public static function ShouldDisplayMapLoadingIdicator() : Boolean { return !IsMapLoadedOnce; }
+			
+			public static function FirstTimeMapActivationInvoked() : void { IsMapLoadedOnce = true; }
+			
+			public static function formattedDateDisplay(date:Object) : String {
+				var df:DateFormatter = new DateFormatter();
+				df.formatString = "D.M.YYYY.";
+				var formattedDate:String = df.format(date);
+				return formattedDate;
+			}
+			
+			public static function dayOfWeekDisplay(date:Object) : String {
+				return daysOfWeek[date.day]
+			}
+			
+			public static function fullDayDateDisplay(date:Object) : String {
+				return StringUtil.substitute("{0} {1}", dayOfWeekDisplay(date), formattedDateDisplay(date));
+			}
+			
+			public static function calculateDaysOffsetFromToday(date:Object) : int {
+				CURRENT_DATE.setHours(0, 0, 0, 0);
+				date.setHours(0, 0, 0, 0);
+				var millisecondsDiff:Number = date.valueOf() - CURRENT_DATE.valueOf();
+				return millisecondsDiff / MILLISECONDS_IN_DAY;
+			}
+		]]>
+	</fx:Script>
+	<s:navigationContent>
+		<s:Button icon="{homeIcon}" click="navigator.popToFirstView()"/>
+		<s:Button icon="{backIcon}" click="navigator.popView()"/>
+	</s:navigationContent>
+	<s:actionContent>
+		<s:Button icon="{HrMusicCalendar.closeAppIcon}" click="NativeApplication.nativeApplication.exit()"/> 
+	</s:actionContent>
+</s:MobileApplication>

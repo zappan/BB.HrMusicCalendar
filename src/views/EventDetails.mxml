@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		title="{data.CategoryName}" xmlns:progress="qnx.ui.progress.*">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:HTTPService 
+			id="mhrlocationshow" 
+			url="http://api.muzika.hr/v1/locations/show/{data.Location.Id}.json?key=[API-KEY-HERE]"
+			resultFormat="text" result="onJSONLocationLoaded(event)"/>
+		<progress:ActivityIndicator id="myActivity" />
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			import com.adobe.serialization.json.JSONDecoder;
+			
+			import mx.collections.ArrayCollection;
+			import mx.core.UIComponent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			[Bindable]
+			protected var actions:ArrayCollection;
+			
+			[Embed("assets/actionicon-map.png")]
+			private var mapIcon:Class;
+			
+			[Embed("assets/actionicon-calendar.png")]
+			private var calendarIcon:Class;
+			
+			[Embed("assets/actionicon-phone.png")]
+			private var phoneIcon:Class;
+			
+			[Embed("assets/actionicon-mail.png")]
+			private var mailIcon:Class;
+			
+			[Embed("assets/actionicon-www.png")]
+			private var wwwIcon:Class;
+			
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				actions = new ArrayCollection();
+				mhrlocationshow.send();
+				
+			}
+			
+			private function onJSONLocationLoaded ( event:ResultEvent ) : void {
+				var rawData:String = String(event.result);
+				var location:Object = JSON.decode(rawData);
+				
+				actions.addItem({type: "info", name: "Naziv programa", details: data.Title, icon: null});
+				if (data.LocationName) {
+					var hasMap:Boolean = (location.Lat && location.Lng);
+					actions.addItem({type: (hasMap ? "map" : "info"), name: "Lokacija", details: data.LocationName, icon: (hasMap ? mapIcon : null), location:data});
+				}
+				if (data.EventStartsFormattedString) {
+					//actions.addItem({type: "cal", name: "Datum i vrijeme", details: data.EventStartsFormattedString, icon: calendarIcon});
+					// temporary: currently can't add to device calendar, so don't allow that action
+					actions.addItem({type: "info", name: "Datum i vrijeme", details: data.EventStartsFormattedString, icon: null});
+				}
+				if (data.Price) {
+					actions.addItem({type: "info", name: "Cijena", details: data.Price, icon: null});
+				}
+				if (location.WebUrl) {
+					actions.addItem({type: "www", name: "Website", details: location.WebUrl, icon: wwwIcon});
+				}
+				if (location.ContactMail) {
+					actions.addItem({type: "mailto", name: "Email", details: location.ContactMail, icon: mailIcon});
+				}
+				if (location.ContactPhone){
+					actions.addItem({type: "tel", name: "Telefon", details: location.ContactPhone, icon: phoneIcon});
+				}
+			}
+			
+
+			protected function eventActionsList_changeHandler(event:IndexChangeEvent):void
+			{
+				var action:Object = eventActionsList.selectedItem;
+				switch(action.type) {
+					case "cal":
+						break;
+					
+					case "map":
+						// add activity indicator before calling map for the first time)
+						if (HrMusicCalendar.ShouldDisplayMapLoadingIdicator()) {
+							// container (IVisualElement) for DisplayObjects
+							var container:UIComponent = new UIComponent();
+							this.addElement(container);
+							
+							// displayObject goes to container
+							//var myActivity:ActivityIndicator = new ActivityIndicator();
+							myActivity.setPosition( (this.width/2 - myActivity.width/2 ), (this.height/2 - myActivity.height) );
+							myActivity.animate(true);
+							container.addChild(myActivity);
+							HrMusicCalendar.FirstTimeMapActivationInvoked();
+						}
+						
+						// call map display
+						this.navigator.pushView(EventMap, action.location)
+						break;
+					
+					case "tel":
+						navigateToURL(new URLRequest("tel:"+action.details));
+						break;
+					
+					case "mailto":
+						navigateToURL(new URLRequest("mailto:"+action.details));
+						break;
+					
+					case "www":
+						navigateToURL(new URLRequest(action.details));
+						break;
+				}					
+			}
+
+		]]>
+	</fx:Script>
+	
+	<s:actionContent>
+		<s:Button icon="{HrMusicCalendar.closeAppIcon}" click="NativeApplication.nativeApplication.exit()"/> 
+	</s:actionContent>
+
+	<s:List id="eventActionsList" dataProvider="{actions}" 
+			top="0" left="0" right="0" bottom="0"
+			change="eventActionsList_changeHandler(event)">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:MobileIconItemRenderer
+					paddingTop="8" paddingBottom="8" verticalGap="6"
+					labelField="name" 
+					messageField="details" 
+					decoratorClass="{data.icon}"/>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	<s:Label id="infoLabel" verticalAlign="middle" bottom="0" right="0"
+			 height="{HrMusicCalendar.BOTTOM_LABEL_SPACING}" lineHeight="{HrMusicCalendar.BOTTOM_LABEL_SPACING}" 
+			 paddingTop="{HrMusicCalendar.BOTTOM_LABEL_TB_PADDING}" paddingLeft="{HrMusicCalendar.BOTTOM_LABEL_LR_PADDING}" paddingRight="{HrMusicCalendar.BOTTOM_LABEL_LR_PADDING}"
+			 textAlign="right" fontSize="11" fontWeight="normal" color="#828282"
+			 text="{HrMusicCalendar.BOTTOM_LABEL_TEXT()}"/>
+</s:View>

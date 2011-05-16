@@ -1,0 +1,12 @@
+<qnx>
+  <initialWindow>
+    <systemChrome>none</systemChrome>
+    <transparent>false</transparent>
+  </initialWindow>
+  <publisher>Netko</publisher>
+  <category>core.ent</category>
+  <icon>
+  	<image>hr-music-calendar-app-icon.png</image>
+  </icon>
+  <splashscreen>hr-music-calendar-splash.png</splashscreen>
+  <author>Netko</author></qnx>

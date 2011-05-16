@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:progress="qnx.ui.progress.*"
+		title="Kalendar izlazaka"
+		creationComplete="data=renderDays()"
+		>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.display.Sprite;
+			
+			import mx.collections.ArrayCollection;
+			import mx.formatters.DateFormatter;
+			import mx.utils.StringUtil;
+			
+			import qnx.ui.progress.ProgressBar;
+			
+			private function renderDays ( ) : ArrayCollection {
+				var days:ArrayCollection = new ArrayCollection();
+				var i:int;
+				for (i=0; i<=7; i++) {
+					var date:Date = new Date();
+					date.setDate(date.date + i);
+					days.addItem(date);
+				}
+				return days;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<progress:ActivityIndicator id="myActivity" />
+	</fx:Declarations>
+	
+	<s:navigationContent>
+		<s:Button icon="{HrMusicCalendar.homeIcon}" click="navigator.popToFirstView()"/>
+	</s:navigationContent>
+	<!-- s:titleContent/ -->
+	
+	<s:List id="daysList" top="0" bottom="0" left="0" right="0"
+			dataProvider="{data}"
+			change="navigator.pushView(EventsList, daysList.selectedItem)">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:MobileIconItemRenderer
+					labelFunction="{HrMusicCalendar.dayOfWeekDisplay}"
+					messageFunction="{HrMusicCalendar.formattedDateDisplay}"
+					/>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	<s:Label id="infoLabel" verticalAlign="middle" bottom="0" right="0"
+			 height="{HrMusicCalendar.BOTTOM_LABEL_SPACING}" lineHeight="{HrMusicCalendar.BOTTOM_LABEL_SPACING}" 
+			 paddingTop="{HrMusicCalendar.BOTTOM_LABEL_TB_PADDING}" paddingLeft="{HrMusicCalendar.BOTTOM_LABEL_LR_PADDING}" paddingRight="{HrMusicCalendar.BOTTOM_LABEL_LR_PADDING}"
+			 textAlign="right" fontSize="11" fontWeight="normal" color="#828282"
+			 text="{HrMusicCalendar.BOTTOM_LABEL_TEXT()}"/>
+</s:View>

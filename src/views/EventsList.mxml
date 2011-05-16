@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		title="{HrMusicCalendar.dayOfWeekDisplay(data)}"
+		creationComplete="mhrevents.send()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			import com.adobe.serialization.json.JSONDecoder;
+			import com.adobe.utils.StringUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.StringUtil;
+			
+			import spark.components.MobileApplication;
+			
+			private function onJSONMultipleDaysEvents ( event:ResultEvent ) : void {
+				var rawData:String = String(event.result);
+				var eventsPerDaysArr:Array = (JSON.decode(rawData) as Array);
+				
+				var dp:ArrayCollection = new ArrayCollection();
+				for each (var day:Array in eventsPerDaysArr) {
+					var events:ArrayCollection = new ArrayCollection(day);
+					dp.addAll(events);
+				}
+				eventsList.dataProvider = dp;
+			}
+			
+			private function onJSONSingleDayEvents ( event:ResultEvent ) : void {
+				var rawData:String = String(event.result);
+				var eventsPerDayArr:Array = (JSON.decode(rawData) as Array);
+				var dp:ArrayCollection = new ArrayCollection(eventsPerDayArr);
+				eventsList.dataProvider = dp;
+			}
+			
+			public function displayLocationWithPriceAndDate(event:Object) : String {
+				var displayText:String = mx.utils.StringUtil.substitute("{0}, {1}", event.LocationName, event.EventStartsFormattedString);
+				if (event.Price){
+					displayText += mx.utils.StringUtil.substitute(" ({0})", event.Price);
+				}
+				return displayText;
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:HTTPService 
+			id="mhrevents" 
+			url="http://api.muzika.hr/v1/events/index.json?dayoffset={HrMusicCalendar.calculateDaysOffsetFromToday(data)}&amp;key=[API-KEY-HERE]"
+			resultFormat="text"
+			result="onJSONSingleDayEvents(event)"
+			/>
+	</fx:Declarations>
+	
+	<!-- s:titleContent/ -->
+	<s:actionContent>
+		<s:Button icon="{HrMusicCalendar.refreshIcon}" click="mhrevents.send()"/> 
+		<s:Button icon="{HrMusicCalendar.closeAppIcon}" click="NativeApplication.nativeApplication.exit()"/> 
+	</s:actionContent>
+	
+	<s:List id="eventsList" top="0" bottom="0" left="0" right="0"
+			change="navigator.pushView(EventDetails, eventsList.selectedItem)">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:MobileIconItemRenderer
+					label="{data.Title}"
+					messageFunction="{outerDocument.displayLocationWithPriceAndDate}"
+				/>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	<s:Label id="infoLabel" verticalAlign="middle" bottom="0" right="0"
+			 height="{HrMusicCalendar.BOTTOM_LABEL_SPACING}" lineHeight="{HrMusicCalendar.BOTTOM_LABEL_SPACING}" 
+			 paddingTop="{HrMusicCalendar.BOTTOM_LABEL_TB_PADDING}" paddingLeft="{HrMusicCalendar.BOTTOM_LABEL_LR_PADDING}" paddingRight="{HrMusicCalendar.BOTTOM_LABEL_LR_PADDING}"
+			 textAlign="right" fontSize="11" fontWeight="normal" color="#828282"
+			 text="{HrMusicCalendar.BOTTOM_LABEL_TEXT()}"/>
+</s:View>

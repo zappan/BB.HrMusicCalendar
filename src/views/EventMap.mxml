@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:maps="com.google.maps.*"
+		title="{data.Title}"
+		>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:HTTPService 
+			id="mhrlocationshow" 
+			url="http://api.muzika.hr/v1/locations/show/{data.Location.Id}.json?key=[API-KEY-HERE]"
+			resultFormat="text" result="onJSONLocationLoaded(event)"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			import com.adobe.serialization.json.JSONDecoder;
+			import com.adobe.utils.StringUtil;
+			import com.google.maps.InfoWindowOptions;
+			import com.google.maps.LatLng;
+			import com.google.maps.Map;
+			import com.google.maps.MapEvent;
+			import com.google.maps.MapMouseEvent;
+			import com.google.maps.MapType;
+			import com.google.maps.controls.*;
+			import com.google.maps.overlays.*;
+			
+			import mx.collections.ArrayCollection;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.StringUtil;			
+			
+			private function onMapReady(event:Event):void {
+				this.map.addControl(new ZoomControl());
+				this.map.addControl(new PositionControl());
+				this.map.addControl(new MapTypeControl());
+				
+				mhrlocationshow.send();
+			}
+			
+			private function onJSONLocationLoaded ( event:ResultEvent ) : void {
+				var rawData:String = String(event.result);
+				var location:Object = JSON.decode(rawData);
+				
+				if (location.Lat && location.Lng) {
+					var lat:Number = location.Lat.replace(",", "."); 
+					var lng:Number = location.Lng.replace(",", "."); 
+					var latLng:LatLng = new LatLng(lat, lng);
+					var mapMarker:Marker = new Marker(latLng);
+					this.map.addOverlay(mapMarker);
+					this.map.setCenter(latLng, 13, MapType.NORMAL_MAP_TYPE);
+					
+					mapMarker.addEventListener(MapMouseEvent.CLICK, function(e:MapMouseEvent):void {
+						openInfoWindow(location);
+					});
+					openInfoWindow(location);
+				}
+				else {
+					this.map.visible = false;
+				}
+			}
+			
+			private function openInfoWindow(location:Object):void {
+				var titleFormat:TextFormat = new TextFormat();
+				titleFormat.bold = true;
+				this.map.openInfoWindow(map.getCenter(), new InfoWindowOptions({
+					title: displayLocationInfo(location),
+					content: displayEventInfo(data, location),
+					titleFormat: titleFormat,
+					width: 320
+				}));
+			}
+			
+			private function displayDateAndPrice(event:Object) : String {
+				var displayText:String = event.EventStartsFormattedString;
+				if (event.Price){
+					displayText += mx.utils.StringUtil.substitute(" ({0})", event.Price);
+				}
+				return displayText;
+			}
+			
+			private function displayEventInfo(event:Object, location:Object) : String {
+				var displayText:String = event.Title + "\n" + displayDateAndPrice(event);
+				return displayText;
+			}
+			
+			private function displayLocationInfo(location:Object) : String {
+				var displayText:String = location.Name;
+				if (location.Address)
+					displayText += "\n" + location.Address + ", " + location.CityName
+				else
+					displayText += "\n" + location.CityName;
+				return displayText;
+			}
+		]]>
+	</fx:Script>
+	
+	<maps:Map xmlns:maps="com.google.maps.*" id="map" mapevent_mapready="onMapReady(event)" width="100%" height="100%" bottom="0" sensor="false" 
+			  key="ABQIAAAA-l4s6FOGWqOcKAfBbh-nCBSOQxz2CYMaTlpaGMv-dWYEklSmzBRy9QFrYcIZR1krvnDcfXmNyO1F4A" url="http://netko.hr"/>
+</s:View>
